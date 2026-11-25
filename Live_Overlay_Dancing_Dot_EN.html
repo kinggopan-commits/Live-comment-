@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Live Overlay Dancing Comment Dot</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    html, body {
+      width: 100vw;
+      height: 100dvh;
+      background: transparent;
+      overflow: hidden;
+      color: #ffffff;
+    }
+
+    /* SMALL ROUND DOT IN TOP-LEFT (OPENS SETTINGS) */
+    .overlay-dot-btn {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2.5px solid #fde047;
+      background: radial-gradient(circle at 30% 30%, #ff2e54, #9333ea);
+      box-shadow: 0 0 18px rgba(255, 46, 84, 0.75);
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 60;
+      transition: transform 0.18s ease;
+    }
+    .overlay-dot-btn:active {
+      transform: scale(0.9);
+    }
+    .overlay-dot-btn.connected {
+      border-color: #4ade80;
+      box-shadow: 0 0 20px rgba(74, 222, 128, 0.85);
+    }
+
+    /* DANCING COMMENT STAGE */
+    #danceStage {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 30;
+      overflow: hidden;
+    }
+
+    .dancer-card {
+      position: absolute;
+      bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 136px;
+      pointer-events: none;
+      animation:
+        danceEnter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+        danceGroove 0.62s ease-in-out 0.35s infinite alternate;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .dancer-card.exit {
+      opacity: 0 !important;
+      transform: translateY(30px) scale(0.6) !important;
+    }
+
+    @keyframes danceEnter {
+      0% { opacity: 0; transform: translateY(50px) scale(0.3); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes danceGroove {
+      0% { transform: translateY(0px) rotate(-9deg) scaleX(1.04) scaleY(0.96); }
+      50% { transform: translateY(-20px) rotate(0deg) scaleX(0.97) scaleY(1.05); }
+      100% { transform: translateY(-4px) rotate(9deg) scaleX(1.04) scaleY(0.96); }
+    }
+
+    .dance-bubble {
+      background: linear-gradient(135deg, #ffffff, #fef08a);
+      color: #090d16;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 5px 9px;
+      border-radius: 12px;
+      border: 2px solid #f59e0b;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
+      max-width: 134px;
+      text-align: center;
+      line-height: 1.2;
+      margin-bottom: 5px;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .dance-body-wrap {
+      position: relative;
+      width: 74px;
+      height: 82px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .dance-head {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 3px solid #fde047;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      box-shadow: 0 0 16px rgba(253, 224, 71, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 900;
+      color: #ffffff;
+      overflow: hidden;
+      z-index: 3;
+    }
+    .dance-head img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .dance-limbs-svg {
+      width: 74px;
+      height: 38px;
+      margin-top: -6px;
+      z-index: 2;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.65));
+    }
+    .arm-l {
+      transform-origin: 22px 8px;
+      animation: swingArmL 0.31s ease-in-out infinite alternate;
+    }
+    .arm-r {
+      transform-origin: 52px 8px;
+      animation: swingArmR 0.31s ease-in-out infinite alternate;
+    }
+    .leg-l {
+      transform-origin: 30px 20px;
+      animation: tapLegL 0.31s ease-in-out infinite alternate;
+    }
+    .leg-r {
+      transform-origin: 44px 20px;
+      animation: tapLegR 0.31s ease-in-out infinite alternate;
+    }
+
+    @keyframes swingArmL {
+      0% { transform: rotate(-32deg); }
+      100% { transform: rotate(36deg); }
+    }
+    @keyframes swingArmR {
+      0% { transform: rotate(32deg); }
+      100% { transform: rotate(-36deg); }
+    }
+    @keyframes tapLegL {
+      0% { transform: translateY(0px) rotate(-14deg); }
+      100% { transform: translateY(-6px) rotate(14deg); }
+    }
+    @keyframes tapLegR {
+      0% { transform: translateY(-6px) rotate(14deg); }
+      100% { transform: translateY(0px) rotate(-14deg); }
+    }
+
+    .dance-name {
+      margin-top: 2px;
+      background: rgba(9, 13, 24, 0.9);
+      border: 1.5px solid #38bdf8;
+      color: #fde047;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 99px;
+      max-width: 132px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.65);
+    }
+
+    /* SETTINGS MODAL INSIDE THE DOT */
+    .settings-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 15, 0.85);
+      backdrop-filter: blur(4px);
+      z-index: 80;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .settings-backdrop.open {
+      display: flex;
+    }
+    .settings-box {
+      width: 100%;
+      max-width: 390px;
+      background: #111827;
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
+    }
+    .settings-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .settings-head h3 {
+      font-size: 14px;
+      font-weight: 900;
+      color: #fde047;
+    }
+    .close-modal-btn {
+      background: #334155;
+      border: none;
+      color: #fff;
+      font-weight: 900;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .settings-box label {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #94a3b8;
+    }
+    .settings-box input {
+      width: 100%;
+      height: 36px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 0 10px;
+      font-size: 12px;
+      outline: none;
+    }
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .action-btn {
+      height: 36px;
+      border: none;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #ffffff;
+      cursor: pointer;
+    }
+    .btn-voice {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+    }
+    .btn-test {
+      background: linear-gradient(135deg, #0284c7, #1d4ed8);
+    }
+    .btn-connect {
+      height: 38px;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+    }
+    .status-line {
+      font-size: 11px;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      border-radius: 8px;
+      padding: 8px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .quick-test-bar {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 8px;
+      display: flex;
+      gap: 6px;
+    }
+    .quick-test-bar input {
+      height: 32px;
+      font-size: 11px;
+    }
+    .quick-test-bar button {
+      height: 32px;
+      padding: 0 12px;
+      background: #f97316;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 900;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <!-- SMALL ROUND OVERLAY DOT -->
+  <button class="overlay-dot-btn" id="dotBtn" title="Overlay Settings">⚙</button>
+
+  <!-- DANCING VIEWERS LAYER -->
+  <div id="danceStage"></div>
+
+  <!-- SETTINGS MODAL OPENED FROM THE DOT -->
+  <div class="settings-backdrop" id="settingsModal">
+    <div class="settings-box">
+      <div class="settings-head">
+        <h3>⚙ Overlay Settings</h3>
+        <button class="close-modal-btn" id="closeModalBtn">✕</button>
+      </div>
+
+      <label>YouTube Data API v3 Key</label>
+      <input type="password" id="apiKeyInput" placeholder="AIzaSy..." />
+
+      <label>Live Video Link or Video ID</label>
+      <input type="text" id="videoIdInput" placeholder="https://youtube.com/live/... or Video ID" />
+
+      <div class="row-2">
+        <button class="action-btn btn-voice" id="voiceBtn">🎙️ VOICE: ON</button>
+        <button class="action-btn btn-test" id="testDanceBtn">💃 TEST DANCE</button>
+      </div>
+
+      <button class="action-btn btn-connect" id="connectBtn">CONNECT LIVE CHAT</button>
+      <div class="status-line" id="statusBox">Status: Enter API Key & Live Video ID, then tap Connect.</div>
+
+      <div class="quick-test-bar">
+        <input type="text" id="simName" placeholder="Name" value="Alex" style="width:32%;" />
+        <input type="text" id="simComment" placeholder="Test comment..." style="flex:1;" />
+        <button id="simSendBtn">SEND</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    const stage = document.getElementById("danceStage");
+    const dotBtn = document.getElementById("dotBtn");
+    const modal = document.getElementById("settingsModal");
+    const statusBox = document.getElementById("statusBox");
+
+    let apiKey = localStorage.getItem("overlay_yt_api_key") || "";
+    let videoInput = localStorage.getItem("overlay_yt_video") || "";
+    let voiceOn = localStorage.getItem("overlay_voice_on") !== "false";
+
+    let liveChatId = null;
+    let nextPageToken = null;
+    let pollTimer = null;
+    const seenIds = new Set();
+
+    const OUTFIT_COLORS = [
+      { suit: "#ef4444", limb: "#fde047" },
+      { suit: "#3b82f6", limb: "#38bdf8" },
+      { suit: "#10b981", limb: "#86efac" },
+      { suit: "#a855f7", limb: "#f0abfc" },
+      { suit: "#f97316", limb: "#fed7aa" }
+    ];
+    let dancerCounter = 0;
+
+    function syncVoiceUi() {
+      const btn = document.getElementById("voiceBtn");
+      btn.textContent = voiceOn ? "🎙️ VOICE: ON" : "🔇 VOICE: OFF";
+      btn.style.background = voiceOn
+        ? "linear-gradient(135deg, #16a34a, #15803d)"
+        : "linear-gradient(135deg, #dc2626, #991b1b)";
+    }
+    syncVoiceUi();
+
+    function pickEnglishVoice() {
+      if (!("speechSynthesis" in window)) return null;
+      const voices = window.speechSynthesis.getVoices();
+      const en = voices.filter(v => v.lang.toLowerCase().startsWith("en"));
+      const pool = en.length ? en : voices;
+      return pool.find(v => /en-in|male|man|daniel|david|ravi|prabhat/i.test(v.name)) || pool[0] || null;
+    }
+
+    function speakComment(author, comment) {
+      if (!voiceOn || !("speechSynthesis" in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(`${author} says: ${comment}`);
+        u.lang = "en-US";
+        u.pitch = 0.95;
+        u.rate = 1.0;
+        const v = pickEnglishVoice();
+        if (v) u.voice = v;
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    }
+
+    function spawnDancingViewer(author, comment, photoUrl = "") {
+      const idx = dancerCounter++;
+      const outfit = OUTFIT_COLORS[idx % OUTFIT_COLORS.length];
+
+      const vw = window.innerWidth || 400;
+      const cardW = 136;
+      const minX = 12;
+      const maxX = Math.max(minX + 20, vw - cardW - 12);
+      const slots = [0.12, 0.36, 0.62, 0.85];
+      const frac = slots[idx % slots.length] + ((Math.random() - 0.5) * 0.06);
+      const xPos = Math.min(maxX, Math.max(minX, frac * (vw - cardW)));
+      const bottomOffset = 20 + (idx % 3) * 18;
+
+      const card = document.createElement("div");
+      card.className = "dancer-card";
+      card.style.left = `${xPos}px`;
+      card.style.bottom = `${bottomOffset}px`;
+      card.style.animationDelay = `0s, ${(idx % 4) * 0.12}s`;
+
+      const bubble = document.createElement("div");
+      bubble.className = "dance-bubble";
+      bubble.textContent = comment || "💃";
+
+      const bodyWrap = document.createElement("div");
+      bodyWrap.className = "dance-body-wrap";
+
+      const head = document.createElement("div");
+      head.className = "dance-head";
+      if (photoUrl) {
+        const img = document.createElement("img");
+        img.referrerPolicy = "no-referrer";
+        img.src = photoUrl;
+        img.onerror = () => {
+          head.textContent = (author || "V").charAt(0).toUpperCase();
+        };
+        head.appendChild(img);
+      } else {
+        head.textContent = (author || "V").charAt(0).toUpperCase();
+      }
+
+      const svgNs = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNs, "svg");
+      svg.setAttribute("viewBox", "0 0 74 38");
+      svg.classList.add("dance-limbs-svg");
+      svg.innerHTML = `
+        <g class="arm-l">
+          <rect x="8" y="6" width="16" height="6" rx="3" fill="${outfit.suit}" stroke="#fff" stroke-width="1"/>
+          <circle cx="7" cy="9" r="3.5" fill="${outfit.limb}"/>
+        </g>
+        <g class="arm-r">
+          <rect x="50" y="6" width="16" height="6" rx="3" fill="${outfit.suit}" stroke="#fff" stroke-width="1"/>
+          <circle cx="67" cy="9" r="3.5" fill="${outfit.limb}"/>
+        </g>
+        <path d="M24 3 Q37 0 50 3 L53 22 Q37 25 21 22 Z" fill="${outfit.suit}" stroke="#ffffff" stroke-width="1.3"/>
+        <circle cx="37" cy="12" r="4" fill="${outfit.limb}"/>
+        <g class="leg-l">
+          <rect x="26" y="21" width="7" height="13" rx="3" fill="${outfit.suit}" stroke="#fff" stroke-width="1"/>
+          <ellipse cx="28" cy="35" rx="6" ry="2.8" fill="${outfit.limb}"/>
+        </g>
+        <g class="leg-r">
+          <rect x="41" y="21" width="7" height="13" rx="3" fill="${outfit.suit}" stroke="#fff" stroke-width="1"/>
+          <ellipse cx="45" cy="35" rx="6" ry="2.8" fill="${outfit.limb}"/>
+        </g>
+      `;
+
+      bodyWrap.appendChild(head);
+      bodyWrap.appendChild(svg);
+
+      const nameTag = document.createElement("div");
+      nameTag.className = "dance-name";
+      nameTag.textContent = author || "Viewer";
+
+      card.appendChild(bubble);
+      card.appendChild(bodyWrap);
+      card.appendChild(nameTag);
+      stage.appendChild(card);
+
+      const cards = stage.querySelectorAll(".dancer-card");
+      if (cards.length > 4) {
+        const oldest = cards[0];
+        oldest.classList.add("exit");
+        setTimeout(() => oldest.remove(), 350);
+      }
+
+      setTimeout(() => {
+        card.classList.add("exit");
+        setTimeout(() => card.remove(), 360);
+      }, 6500);
+
+      speakComment(author || "Viewer", comment || "");
+    }
+
+    function parseVideoId(val) {
+      const s = (val || "").trim();
+      const m = s.match(/(?:v=|\/live\/|youtu\.be\/|shorts\/|embed\/)([a-zA-Z0-9_-]{11})/) || s.match(/^([a-zA-Z0-9_-]{11})$/);
+      return m ? m[1] : "";
+    }
+
+    async function connectLive() {
+      const vidId = parseVideoId(videoInput);
+      if (!apiKey) {
+        statusBox.textContent = "❌ Please enter your YouTube Data API v3 Key.";
+        return;
+      }
+      if (!vidId) {
+        statusBox.textContent = "❌ Please enter a valid Live Video Link or 11-character Video ID.";
+        return;
+      }
+      statusBox.textContent = `Connecting (${vidId})...`;
+      try {
+        const r = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails,snippet&id=${encodeURIComponent(vidId)}&key=${encodeURIComponent(apiKey)}`);
+        const d = await r.json();
+        if (!r.ok || d.error) {
+          throw new Error(d.error?.message || `HTTP ${r.status}`);
+        }
+        const item = d.items?.[0];
+        if (!item) throw new Error("Video not found or is Private.");
+        const chatId = item.liveStreamingDetails?.activeLiveChatId;
+        if (!chatId) throw new Error("Live Chat is not active on this video.");
+
+        liveChatId = chatId;
+        nextPageToken = null;
+        dotBtn.classList.add("connected");
+        statusBox.textContent = `✅ Connected: ${item.snippet?.title || vidId}`;
+
+        if (pollTimer) clearInterval(pollTimer);
+        pollMessages();
+        pollTimer = setInterval(pollMessages, 2200);
+      } catch (e) {
+        dotBtn.classList.remove("connected");
+        statusBox.textContent = "❌ " + e.message;
+      }
+    }
+
+    async function pollMessages() {
+      if (!liveChatId || !apiKey) return;
+      try {
+        let url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${encodeURIComponent(liveChatId)}&part=snippet,authorDetails&key=${encodeURIComponent(apiKey)}`;
+        if (nextPageToken) url += `&pageToken=${encodeURIComponent(nextPageToken)}`;
+        const r = await fetch(url);
+        const d = await r.json();
+        if (!r.ok || d.error) {
+          statusBox.textContent = "❌ " + (d.error?.message || r.status);
+          return;
+        }
+        if (d.nextPageToken) nextPageToken = d.nextPageToken;
+        if (Array.isArray(d.items)) {
+          for (const item of d.items) {
+            if (seenIds.has(item.id)) continue;
+            seenIds.add(item.id);
+            const author = item.authorDetails?.displayName || "Viewer";
+            const photo = item.authorDetails?.profileImageUrl || "";
+            const msg = item.snippet?.displayMessage || "";
+            if (msg) spawnDancingViewer(author, msg, photo);
+          }
+        }
+      } catch (e) {}
+    }
+
+    dotBtn.onclick = () => {
+      document.getElementById("apiKeyInput").value = apiKey;
+      document.getElementById("videoIdInput").value = videoInput;
+      modal.classList.add("open");
+    };
+
+    document.getElementById("closeModalBtn").onclick = () => {
+      modal.classList.remove("open");
+    };
+
+    document.getElementById("voiceBtn").onclick = () => {
+      voiceOn = !voiceOn;
+      localStorage.setItem("overlay_voice_on", String(voiceOn));
+      syncVoiceUi();
+      if (!voiceOn && "speechSynthesis" in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+    };
+
+    document.getElementById("testDanceBtn").onclick = () => {
+      spawnDancingViewer("Super Fan", "Awesome stream! 🔥💃", "");
+    };
+
+    document.getElementById("connectBtn").onclick = () => {
+      apiKey = document.getElementById("apiKeyInput").value.trim();
+      videoInput = document.getElementById("videoIdInput").value.trim();
+      localStorage.setItem("overlay_yt_api_key", apiKey);
+      localStorage.setItem("overlay_yt_video", videoInput);
+      connectLive();
+    };
+
+    document.getElementById("simSendBtn").onclick = () => {
+      const n = document.getElementById("simName").value.trim() || "Viewer";
+      const c = document.getElementById("simComment").value.trim() || "Hello everyone! 💃";
+      document.getElementById("simComment").value = "";
+      spawnDancingViewer(n, c, "");
+    };
+  })();
+  </script>
+</body>
+</html>
